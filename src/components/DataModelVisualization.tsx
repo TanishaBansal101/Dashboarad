@@ -24,20 +24,15 @@ const Node: React.FC<NodeProps> = ({ position, size = 0.5, color = '#0EA5E9', ty
   return (
     <mesh position={position} ref={ref}>
       {type === 'sphere' && (
-        <Sphere args={[size, 16, 16]}>
-          <meshStandardMaterial color={color} roughness={0.2} metalness={0.8} />
-        </Sphere>
+        <sphereGeometry args={[size, 16, 16]} />
       )}
       {type === 'box' && (
-        <Box args={[size, size, size]}>
-          <meshStandardMaterial color={color} roughness={0.2} metalness={0.8} />
-        </Box>
+        <boxGeometry args={[size, size, size]} />
       )}
       {type === 'torus' && (
-        <Torus args={[size, size/4, 16, 32]}>
-          <meshStandardMaterial color={color} roughness={0.2} metalness={0.8} />
-        </Torus>
+        <torusGeometry args={[size, size/4, 16, 32]} />
       )}
+      <meshStandardMaterial color={color} roughness={0.2} metalness={0.8} />
     </mesh>
   );
 };
@@ -45,23 +40,23 @@ const Node: React.FC<NodeProps> = ({ position, size = 0.5, color = '#0EA5E9', ty
 const Connection: React.FC<{ start: [number, number, number]; end: [number, number, number] }> = ({ start, end }) => {
   const ref = useRef<THREE.Mesh>(null);
   
+  const vec1 = new THREE.Vector3(...start);
+  const vec2 = new THREE.Vector3(...end);
+  const distance = vec1.distanceTo(vec2);
+  
+  // Calculate the midpoint for positioning
+  const midPoint = new THREE.Vector3().addVectors(
+    vec1,
+    new THREE.Vector3().subVectors(vec2, vec1).multiplyScalar(0.5)
+  );
+  
   useFrame(() => {
     if (ref.current) {
-      const direction = new THREE.Vector3().subVectors(
-        new THREE.Vector3(...end),
-        new THREE.Vector3(...start)
-      );
-      const center = new THREE.Vector3().addVectors(
-        new THREE.Vector3(...start),
-        direction.clone().multiplyScalar(0.5)
-      );
-      ref.current.position.copy(center);
-      ref.current.lookAt(new THREE.Vector3(...end));
+      ref.current.position.copy(midPoint);
+      ref.current.lookAt(vec2);
       ref.current.rotateX(Math.PI / 2);
     }
   });
-
-  const distance = new THREE.Vector3(...start).distanceTo(new THREE.Vector3(...end));
 
   return (
     <mesh ref={ref}>
