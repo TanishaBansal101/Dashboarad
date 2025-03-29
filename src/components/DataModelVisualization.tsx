@@ -1,7 +1,7 @@
 
 import React, { useRef } from 'react';
 import { Canvas, useFrame } from '@react-three/fiber';
-import { OrbitControls, Sphere, Box, Torus, useTexture } from '@react-three/drei';
+import { OrbitControls, Sphere, Box, Torus } from '@react-three/drei';
 import * as THREE from 'three';
 
 interface NodeProps {
@@ -21,23 +21,23 @@ const Node: React.FC<NodeProps> = ({ position, size = 0.5, color = '#0EA5E9', ty
     }
   });
 
-  const colorMaterial = new THREE.MeshStandardMaterial({
-    color: color,
-    roughness: 0.2,
-    metalness: 0.8,
-  });
-
   return (
     <mesh position={position} ref={ref}>
-      {type === 'sphere' && <Sphere args={[size, 16, 16]}>
-        <primitive object={colorMaterial} attach="material" />
-      </Sphere>}
-      {type === 'box' && <Box args={[size, size, size]}>
-        <primitive object={colorMaterial} attach="material" />
-      </Box>}
-      {type === 'torus' && <Torus args={[size, size/4, 16, 32]}>
-        <primitive object={colorMaterial} attach="material" />
-      </Torus>}
+      {type === 'sphere' && (
+        <Sphere args={[size, 16, 16]}>
+          <meshStandardMaterial color={color} roughness={0.2} metalness={0.8} />
+        </Sphere>
+      )}
+      {type === 'box' && (
+        <Box args={[size, size, size]}>
+          <meshStandardMaterial color={color} roughness={0.2} metalness={0.8} />
+        </Box>
+      )}
+      {type === 'torus' && (
+        <Torus args={[size, size/4, 16, 32]}>
+          <meshStandardMaterial color={color} roughness={0.2} metalness={0.8} />
+        </Torus>
+      )}
     </mesh>
   );
 };
@@ -45,10 +45,8 @@ const Node: React.FC<NodeProps> = ({ position, size = 0.5, color = '#0EA5E9', ty
 const Connection: React.FC<{ start: [number, number, number]; end: [number, number, number] }> = ({ start, end }) => {
   const ref = useRef<THREE.Mesh>(null);
   
-  // Create a geometry that connects two points
   useFrame(() => {
     if (ref.current) {
-      // The cylinder needs to be positioned and rotated to connect the points
       const direction = new THREE.Vector3().subVectors(
         new THREE.Vector3(...end),
         new THREE.Vector3(...start)
@@ -63,16 +61,18 @@ const Connection: React.FC<{ start: [number, number, number]; end: [number, numb
     }
   });
 
+  const distance = new THREE.Vector3(...start).distanceTo(new THREE.Vector3(...end));
+
   return (
     <mesh ref={ref}>
-      <cylinderGeometry args={[0.03, 0.03, new THREE.Vector3(...start).distanceTo(new THREE.Vector3(...end)), 8]} />
+      <cylinderGeometry args={[0.03, 0.03, distance, 8]} />
       <meshBasicMaterial color="#7DD3FC" transparent opacity={0.6} />
     </mesh>
   );
 };
 
 const DataNodes: React.FC = () => {
-  // Main data nodes
+  // Main data nodes with properly typed positions
   const nodes: NodeProps[] = [
     { position: [0, 0, 0], size: 0.8, color: '#0EA5E9', type: 'sphere' },
     { position: [-2, 1, -1], size: 0.6, color: '#7DD3FC', type: 'sphere' },
@@ -83,8 +83,8 @@ const DataNodes: React.FC = () => {
     { position: [-3, 0, 1], size: 0.5, color: '#0EA5E9', type: 'torus' },
   ];
 
-  // Connections between nodes
-  const connections = [
+  // Connections between nodes with properly typed positions
+  const connections: { start: [number, number, number]; end: [number, number, number] }[] = [
     { start: [0, 0, 0], end: [-2, 1, -1] },
     { start: [0, 0, 0], end: [2, -1, 1] },
     { start: [0, 0, 0], end: [1, 2, -2] },
